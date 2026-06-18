@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/* Configure class-based dark mode variant for Tailwind v4 */
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  
+  /* Modern HSL-based Custom Palette */
+  --color-brand-50: hsl(225, 100%, 97%);
+  --color-brand-100: hsl(225, 100%, 93%);
+  --color-brand-200: hsl(225, 100%, 86%);
+  --color-brand-500: hsl(225, 73%, 57%);
+  --color-brand-600: hsl(225, 73%, 47%);
+  --color-brand-700: hsl(225, 73%, 37%);
+  
+  --color-dark-bg: hsl(222, 47%, 11%);
+  --color-dark-card: hsl(223, 47%, 15%);
+  --color-dark-border: hsl(223, 47%, 20%);
+}
+
+@layer base {
+  html, body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background-color: #f8fafc;
+    color: #0f172a;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    min-height: 100vh;
+  }
+  
+  /* Apply dark class override */
+  html.dark body {
+    background-color: var(--color-dark-bg);
+    color: #f8fafc;
+  }
+}
+
+/* Custom scrollbar for premium aesthetics */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateY(1rem) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
