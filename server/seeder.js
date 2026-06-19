@@ -23,6 +23,12 @@ const seedData = async () => {
     // Create 3 Users
     const users = await User.create([
       {
+        name: 'Akash',
+        email: 'akash123@gmail.com',
+        password: 'Akash@123',
+        role: 'admin',
+      },
+      {
         name: 'Sarah Jenkins',
         email: 'admin@crm.com',
         password: 'password123',
