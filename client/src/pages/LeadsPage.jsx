@@ -151,6 +151,29 @@ const LeadsPage = () => {
     }
   };
 
+  // Advance lead status along pipeline: new -> contacted -> converted
+  const handleAdvanceStatus = async (lead, e) => {
+    e.stopPropagation();
+    try {
+      const current = lead.status;
+      let next = null;
+      if (current === 'new') next = 'contacted';
+      else if (current === 'contacted') next = 'converted';
+      else return; // nothing to do
+
+      setSubmitLoading(true);
+      const response = await api.patch(`/leads/${lead._id}/status`, { status: next });
+      if (response.data.success) {
+        showToast(`Lead status updated to '${next}'`, 'success');
+        fetchLeads();
+      }
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Status update failed', 'error');
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
   const handleClearFilters = () => {
     setSearch('');
     setStatus('');
@@ -310,6 +333,20 @@ const LeadsPage = () => {
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                          </button>
+                        )}
+
+                        {/* Quick advance status button */}
+                        {!isViewer && (lead.status === 'new' || lead.status === 'contacted') && (
+                          <button
+                            onClick={(e) => handleAdvanceStatus(lead, e)}
+                            className="p-1.5 rounded-lg border border-slate-100 dark:border-slate-800 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-slate-50 dark:hover:bg-slate-850/40 transition-colors"
+                            title={lead.status === 'new' ? 'Mark Contacted' : 'Convert Lead'}
+                          >
+                            {/* simple arrow icon */}
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                             </svg>
                           </button>
                         )}

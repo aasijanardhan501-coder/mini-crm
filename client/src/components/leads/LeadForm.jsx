@@ -132,6 +132,7 @@ const LeadForm = ({ initialData = null, onSubmit, onCancel, submitLoading = fals
           >
             <option value="new">New</option>
             <option value="contacted">Contacted</option>
+            <option value="converted">Converted</option>
             <option value="qualified">Qualified</option>
             <option value="proposal sent">Proposal Sent</option>
             <option value="won">Won</option>
