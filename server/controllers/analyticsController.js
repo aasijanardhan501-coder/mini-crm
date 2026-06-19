@@ -11,7 +11,7 @@ const getOverviewStats = async (req, res, next) => {
   try {
     const totalLeads = await Lead.countDocuments();
     const newLeads = await Lead.countDocuments({ status: 'new' });
-    const convertedLeads = await Lead.countDocuments({ status: 'converted' });
+    const convertedLeads = await Lead.countDocuments({ status: 'won' });
 
     // Calculate conversion rate percentage
     const conversionRate = totalLeads > 0 

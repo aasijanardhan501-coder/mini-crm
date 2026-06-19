@@ -13,7 +13,7 @@ const LeadForm = ({ initialData = null, onSubmit, onCancel, submitLoading = fals
     company: initialData?.company || '',
     status: initialData?.status || 'new',
     source: initialData?.source || 'website',
-    value: initialData?.value || 0,
+    value: initialData?.value !== undefined && initialData?.value !== null ? initialData.value : '',
     assignedTo: initialData?.assignedTo?._id || initialData?.assignedTo || '',
   });
 
@@ -52,7 +52,7 @@ const LeadForm = ({ initialData = null, onSubmit, onCancel, submitLoading = fals
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'value' ? parseFloat(value) || 0 : value,
+      [name]: value,
     }));
   };
 
@@ -64,7 +64,8 @@ const LeadForm = ({ initialData = null, onSubmit, onCancel, submitLoading = fals
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
-    if (formData.value < 0) newErrors.value = 'Value cannot be negative';
+    const numVal = parseFloat(formData.value) || 0;
+    if (numVal < 0) newErrors.value = 'Value cannot be negative';
     if (!formData.assignedTo) newErrors.assignedTo = 'Lead must be assigned to an staff member';
 
     setErrors(newErrors);
@@ -74,7 +75,10 @@ const LeadForm = ({ initialData = null, onSubmit, onCancel, submitLoading = fals
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validate()) return;
-    onSubmit(formData);
+    onSubmit({
+      ...formData,
+      value: parseFloat(formData.value) || 0,
+    });
   };
 
   return (
@@ -129,7 +133,8 @@ const LeadForm = ({ initialData = null, onSubmit, onCancel, submitLoading = fals
             <option value="new">New</option>
             <option value="contacted">Contacted</option>
             <option value="qualified">Qualified</option>
-            <option value="converted">Converted</option>
+            <option value="proposal sent">Proposal Sent</option>
+            <option value="won">Won</option>
             <option value="lost">Lost</option>
           </select>
         </div>

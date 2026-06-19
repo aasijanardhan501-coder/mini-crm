@@ -2,10 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useToast } from '../context/ToastContext';
+import { useTheme } from '../context/ThemeContext';
 import { formatCurrency, getRelativeTime } from '../utils/helpers';
 import Card from '../components/common/Card';
 import Badge from '../components/common/Badge';
 import Skeleton from '../components/common/Skeleton';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from 'recharts';
 import {
   Users,
   Target,
@@ -17,29 +28,71 @@ import {
   UserPlus,
 } from 'lucide-react';
 
+const STATUS_ORDER = [
+  { key: 'new', label: 'New' },
+  { key: 'contacted', label: 'Contacted' },
+  { key: 'qualified', label: 'Qualified' },
+  { key: 'proposal sent', label: 'Proposal Sent' },
+  { key: 'won', label: 'Won' },
+  { key: 'lost', label: 'Lost' },
+];
+
+const STATUS_COLORS = {
+  'New': '#3b82f6',            // Blue
+  'Contacted': '#f59e0b',      // Amber
+  'Qualified': '#a855f7',      // Purple
+  'Proposal Sent': '#6366f1', // Indigo
+  'Won': '#10b981',            // Emerald
+  'Lost': '#f43f5e',           // Rose
+};
+
 const DashboardPage = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { theme } = useTheme();
 
   const [stats, setStats] = useState(null);
   const [recentLeads, setRecentLeads] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [statusChartData, setStatusChartData] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const isDark = theme === 'dark';
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         // Fetch in parallel
-        const [statsRes, leadsRes, activityRes] = await Promise.all([
+        const [statsRes, leadsRes, activityRes, statusRes] = await Promise.all([
           api.get('/analytics/overview'),
           api.get('/leads?page=1&limit=5'),
           api.get('/analytics/recent-activity'),
+          api.get('/analytics/leads-by-status'),
         ]);
 
         if (statsRes.data.success) setStats(statsRes.data.data);
         if (leadsRes.data.success) setRecentLeads(leadsRes.data.data);
         if (activityRes.data.success) setActivities(activityRes.data.data);
+
+        let rawStatusData = [];
+        if (statusRes.data.success) {
+          rawStatusData = statusRes.data.data;
+        }
+
+        // Map status counts, defaulting to 0 for missing ones
+        const formattedStatusData = STATUS_ORDER.map(({ key, label }) => {
+          const matched = rawStatusData.find(
+            (item) => item.status?.toLowerCase() === key || (key === 'won' && item.status?.toLowerCase() === 'converted')
+          );
+          return {
+            status: label,
+            count: matched ? matched.count : 0,
+            value: matched ? matched.value : 0,
+          };
+        });
+
+        setStatusChartData(formattedStatusData);
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
         showToast('Error loading dashboard metrics', 'error');
@@ -68,7 +121,7 @@ const DashboardPage = () => {
       description: 'Awaiting first contact',
     },
     {
-      title: 'Converted',
+      title: 'Won Leads',
       value: stats?.convertedLeads,
       icon: <Target className="w-5 h-5 text-emerald-500" />,
       bgIcon: 'bg-emerald-50 dark:bg-emerald-950/20',
@@ -89,6 +142,13 @@ const DashboardPage = () => {
       description: 'Estimated deal sum',
     },
   ];
+
+  const chartGridColor = isDark ? '#334155' : '#e2e8f0';
+  const chartTextColor = isDark ? '#94a3b8' : '#64748b';
+  const tooltipBg = isDark ? '#1e293b' : '#ffffff';
+  const tooltipBorder = isDark ? '#334155' : '#e2e8f0';
+
+  const hasNoLeads = !statusChartData || statusChartData.every((item) => item.count === 0);
 
   return (
     <div className="space-y-8 animate-slide-in">
@@ -127,6 +187,81 @@ const DashboardPage = () => {
               </Card>
             ))}
       </div>
+
+      {/* 1.5. Lead Status Analytics Chart */}
+      <Card className="flex flex-col min-h-[350px]">
+        <div className="pb-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+              Lead Status Analytics
+            </h3>
+            <p className="text-xs font-medium text-slate-400 dark:text-slate-500">
+              Distribution of leads across the pipeline stages
+            </p>
+          </div>
+          <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-brand-600" />
+              <span>Leads Count</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-grow flex items-center justify-center pt-6 min-h-[220px]">
+          {loading ? (
+            <div className="w-full space-y-4">
+              <Skeleton variant="rect" height="200px" />
+            </div>
+          ) : hasNoLeads ? (
+            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+              <Target className="w-12 h-12 stroke-1 mb-2 text-slate-300 dark:text-slate-700" />
+              <p className="text-sm font-semibold">No lead status data available</p>
+              <p className="text-xs text-slate-400 mt-1">Create leads to populate the status distribution chart.</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={statusChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
+                <XAxis 
+                  dataKey="status" 
+                  stroke={chartTextColor} 
+                  fontSize={11} 
+                  tickLine={false} 
+                  axisLine={false}
+                />
+                <YAxis 
+                  stroke={chartTextColor} 
+                  fontSize={11} 
+                  tickLine={false} 
+                  axisLine={false}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  cursor={{ fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}
+                  contentStyle={{
+                    backgroundColor: tooltipBg,
+                    borderColor: tooltipBorder,
+                    borderRadius: '12px',
+                    color: isDark ? '#f8fafc' : '#0f172a',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                  }}
+                  formatter={(value) => [value, 'Leads']}
+                />
+                <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={45}>
+                  {statusChartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={STATUS_COLORS[entry.status] || '#3b82f6'} 
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </Card>
 
       {/* 2. Split Panels (Recent Leads & Recent Activity) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

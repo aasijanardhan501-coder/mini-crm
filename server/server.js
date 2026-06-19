@@ -1,12 +1,13 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-const express = require('express');
-const cors    = require('cors');
-const helmet  = require('helmet');
-const morgan  = require('morgan');
+const express  = require('express');
+const cors     = require('cors');
+const helmet   = require('helmet');
+const morgan   = require('morgan');
+const mongoose = require('mongoose');
 
-const connectDB        = require('./config/db');
+const connectDB                  = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 // ─── Connect Database ─────────────────────────────────────────────────────────
@@ -18,26 +19,27 @@ const app = express();
 // Security headers
 app.use(helmet());
 
-// CORS — allow Vite dev server and production client
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:3000',
-  process.env.CLIENT_URL,
-].filter(Boolean);
-
+// CORS — allow any localhost port in dev, and specific origins in production
 app.use(
   cors({
     origin: (origin, cb) => {
-      // Allow requests with no origin (curl, Postman, mobile)
+      // Allow requests with no origin (curl, Postman, mobile apps)
       if (!origin) return cb(null, true);
-      
-      // In development/local testing, dynamically allow any localhost origin/port
-      const isLocalhost = origin.startsWith('http://localhost:') || origin === 'http://localhost';
-      
-      if (isLocalhost || allowedOrigins.includes(origin)) {
+
+      // Allow any localhost or 127.0.0.1 port during local development
+      if (
+        origin.startsWith('http://localhost:') || origin === 'http://localhost' ||
+        origin.startsWith('http://127.0.0.1:') || origin === 'http://127.0.0.1'
+      ) {
         return cb(null, true);
       }
+
+      // Allow configured production client URL
+      const clientUrl = process.env.CLIENT_URL || '';
+      if (clientUrl && origin === clientUrl) {
+        return cb(null, true);
+      }
+
       cb(new Error(`CORS: origin ${origin} not allowed`));
     },
     credentials: true,
@@ -55,16 +57,14 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// ─── Database connection health check middleware ─────────────────────────────
-app.use((req, res, next) => {
-  if (req.originalUrl.startsWith('/api')) {
-    const mongoose = require('mongoose');
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({
-        success: false,
-        message: 'Database is currently offline. Please ensure MongoDB is running (e.g. on port 27017) or verify your MONGO_URI in the environment configuration.',
-      });
-    }
+// ─── Database health check for API routes ────────────────────────────────────
+app.use('/api', (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message:
+        'Database is currently offline. Please ensure MongoDB is running or verify your MONGO_URI configuration.',
+    });
   }
   next();
 });
@@ -75,6 +75,7 @@ app.get('/', (_req, res) => {
     success: true,
     message: 'Mini CRM API is running',
     environment: process.env.NODE_ENV || 'development',
+    dbStatus: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
   });
 });
 
@@ -83,45 +84,27 @@ app.use('/api/auth',      require('./routes/authRoutes'));
 app.use('/api/leads',     require('./routes/leadRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 
-// ─── Serve Frontend / Redirect ────────────────────────────────────────────────
+// ─── Serve Frontend (Production only) ────────────────────────────────────────
+// In production, serve the built React app for all non-API routes.
+// In development, the frontend runs on Vite's own dev server (port 5173/5174).
 if (process.env.NODE_ENV === 'production') {
   const distPath = path.join(__dirname, '../client/dist');
   app.use(express.static(distPath));
-  
-  app.get('*', (req, res, next) => {
-    if (req.originalUrl.startsWith('/api')) {
-      return next();
-    }
+
+  // SPA fallback — return index.html for all non-API GET requests
+  app.get('*', (req, res) => {
     res.sendFile(path.resolve(distPath, 'index.html'));
-  });
-} else {
-  // In development, redirect non-API requests on backend port to Vite server
-  app.get('*', (req, res, next) => {
-    if (req.originalUrl.startsWith('/api')) {
-      return next();
-    }
-    
-    // Dynamically detect local client port if referred from another page
-    const referer = req.headers.referer;
-    let clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-    if (referer && referer.startsWith('http://localhost:')) {
-      try {
-        const url = new URL(referer);
-        clientUrl = url.origin;
-      } catch (e) {
-        // Fallback to default
-      }
-    }
-    res.redirect(`${clientUrl}${req.originalUrl}`);
   });
 }
 
-// ─── Error Handling ───────────────────────────────────────────────────────────
+// ─── Error Handling (must be last) ───────────────────────────────────────────
 app.use(notFound);
 app.use(errorHandler);
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  console.log(
+    `🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`
+  );
 });

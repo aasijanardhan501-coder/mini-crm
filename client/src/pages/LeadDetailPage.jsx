@@ -205,7 +205,8 @@ const LeadDetailPage = () => {
                   <option value="new">New</option>
                   <option value="contacted">Contacted</option>
                   <option value="qualified">Qualified</option>
-                  <option value="converted">Converted</option>
+                  <option value="proposal sent">Proposal Sent</option>
+                  <option value="won">Won</option>
                   <option value="lost">Lost</option>
                 </select>
               </div>

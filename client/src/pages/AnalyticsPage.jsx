@@ -76,11 +76,13 @@ const AnalyticsPage = () => {
 
   // Status color mappings
   const STATUS_COLORS = {
-    new: '#3b82f6',        // Blue
-    contacted: '#f59e0b',  // Amber
-    qualified: '#a855f7',  // Purple
-    converted: '#10b981',  // Emerald
-    lost: '#f43f5e',       // Rose
+    new: '#3b82f6',            // Blue
+    contacted: '#f59e0b',      // Amber
+    qualified: '#a855f7',      // Purple
+    'proposal sent': '#6366f1', // Indigo
+    won: '#10b981',            // Emerald
+    lost: '#f43f5e',           // Rose
+    converted: '#10b981',      // Emerald (fallback)
   };
 
   // Source color mappings

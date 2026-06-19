@@ -21,7 +21,7 @@ const createLeadValidator = [
     .trim(),
   body('status')
     .optional()
-    .isIn(['new', 'contacted', 'qualified', 'converted', 'lost'])
+    .isIn(['new', 'contacted', 'qualified', 'proposal sent', 'won', 'lost'])
     .withMessage('Invalid status value'),
   body('source')
     .optional()
@@ -59,7 +59,7 @@ const updateLeadValidator = [
     .trim(),
   body('status')
     .optional()
-    .isIn(['new', 'contacted', 'qualified', 'converted', 'lost'])
+    .isIn(['new', 'contacted', 'qualified', 'proposal sent', 'won', 'lost'])
     .withMessage('Invalid status value'),
   body('source')
     .optional()
@@ -82,7 +82,7 @@ const updateStatusValidator = [
   body('status')
     .notEmpty()
     .withMessage('Status is required')
-    .isIn(['new', 'contacted', 'qualified', 'converted', 'lost'])
+    .isIn(['new', 'contacted', 'qualified', 'proposal sent', 'won', 'lost'])
     .withMessage('Invalid status value'),
 ];
 
