@@ -331,10 +331,11 @@ const LoginPage = () => {
               {/* Role selector — signup only */}
               {!isLogin && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <label htmlFor="role-select" className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Shield className="w-3.5 h-3.5" /> Account Role
                   </label>
                   <select
+                    id="role-select"
                     name="role"
                     value={form.role}
                     onChange={handleChange}
@@ -350,8 +351,9 @@ const LoginPage = () => {
               {/* Remember me — login only */}
               {isLogin && (
                 <div className="flex items-center justify-between text-xs font-medium text-slate-400">
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <label htmlFor="remember-me" className="flex items-center gap-2 cursor-pointer select-none">
                     <input
+                      id="remember-me"
                       type="checkbox"
                       className="rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:bg-slate-800 dark:border-slate-600"
                     />

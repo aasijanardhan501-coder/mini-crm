@@ -1,3 +1,4 @@
+const path = require('path');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const User = require('./models/User');
@@ -5,7 +6,7 @@ const Lead = require('./models/Lead');
 const Activity = require('./models/Activity');
 
 // Load env vars
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Connect to DB
 mongoose.connect(process.env.MONGO_URI);
