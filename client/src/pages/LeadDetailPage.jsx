@@ -200,10 +200,11 @@ const LeadDetailPage = () => {
                   value={lead.status}
                   onChange={handleStatusChange}
                   disabled={isViewer || statusLoading}
-                  className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-150 outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50"
+                  className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50"
                 >
                   <option value="new">New</option>
                   <option value="contacted">Contacted</option>
+                  <option value="converted">Converted</option>
                   <option value="qualified">Qualified</option>
                   <option value="proposal sent">Proposal Sent</option>
                   <option value="won">Won</option>
